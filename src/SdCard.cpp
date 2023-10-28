@@ -10,7 +10,7 @@
 #ifdef SD_MMC_1BIT_MODE
 	fs::FS gFSystem = (fs::FS)SD_MMC;
 #else
-	SPIClass spiSD(HSPI);
+	SPIClass spiSD(VSPI);
 	fs::FS gFSystem = (fs::FS)SD;
 #endif
 
@@ -23,8 +23,8 @@ void SdCard_Init(void) {
 			pinMode(SPISD_CS, OUTPUT);
 			digitalWrite(SPISD_CS, HIGH);
 			spiSD.begin(SPISD_SCK, SPISD_MISO, SPISD_MOSI, SPISD_CS);
-			spiSD.setFrequency(1000000);
-			while (!SD.begin(SPISD_CS, spiSD)) {
+			// spiSD.setFrequency(1000000);
+			while (!SD.begin(SPISD_CS, spiSD, 80000000U)) {
 		#endif
 	#else
 		#ifdef SD_MMC_1BIT_MODE

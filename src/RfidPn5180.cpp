@@ -83,8 +83,9 @@ extern unsigned long Rfid_LastRfidCheckTimestamp;
 	}
 
 	void Rfid_Task(void *parameter) {
-		static PN5180ISO14443 nfc14443(RFID_CS, RFID_BUSY, RFID_RST);
-		static PN5180ISO15693 nfc15693(RFID_CS, RFID_BUSY, RFID_RST);
+		SPIClass hspi(HSPI);
+		static PN5180ISO14443 nfc14443(RFID_CS, RFID_BUSY, RFID_RST, RFID_SCK, RFID_MISO, RFID_MOSI, hspi);
+		static PN5180ISO15693 nfc15693(RFID_CS, RFID_BUSY, RFID_RST, RFID_SCK, RFID_MISO, RFID_MOSI, hspi);
 		uint32_t lastTimeDetected14443 = 0;
 		uint32_t lastTimeDetected15693 = 0;
 		#ifdef PAUSE_WHEN_RFID_REMOVED
@@ -176,7 +177,7 @@ extern unsigned long Rfid_LastRfidCheckTimestamp;
 				//
 				// default factory password for ICODE-SLIX2 is {0x0F, 0x0F, 0x0F, 0x0F}
 				//
-				uint8_t password[] = {0x0F, 0x0F, 0x0F, 0x0F};
+				uint8_t password[] = {0x5B, 0x6E, 0xFD, 0x7F};
 				ISO15693ErrorCode myrc = nfc15693.disablePrivacyMode(password);
 				if (ISO15693_EC_OK == myrc) {
 					if (showDisablePrivacyNotification) {
