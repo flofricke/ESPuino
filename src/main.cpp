@@ -45,7 +45,8 @@ static constexpr const char *logo = R"literal(
 )literal";
 
 // avoid PSRAM check while wake-up from deepsleep
-bool testSPIRAM(void) {
+bool testSPIRAM(void)
+{
 	return true;
 }
 
@@ -74,25 +75,45 @@ TwoWire i2cBusTwo = TwoWire(1);
 // That reason for a mechanism is necessary to prevent this.
 // At start of a boot, bootCount is incremented by one and after 30s decremented because
 // uptime of 30s is considered as "successful boot".
-void recoverBootCountFromNvs(void) {
-	if (recoverBootCount) {
+
+void recoverBootCountFromNvs(void)
+{
+	if (recoverBootCount)
+	{
+
 		recoverBootCount = false;
 		resetBootCount = true;
 		bootCount = gPrefsSettings.getUInt("bootCount", 999);
 
-		if (bootCount == 999) { // first init
+		if (bootCount == 999)
+		{ // first init
 			bootCount = 1;
 			gPrefsSettings.putUInt("bootCount", bootCount);
-		} else if (bootCount >= 3) { // considered being a bootloop => don't recover last rfid!
+		}
+		else if (bootCount >= 3)
+		{ // considered being a bootloop => don't recover last rfid!
 			bootCount = 1;
 			gPrefsSettings.putUInt("bootCount", bootCount);
 			gPrefsSettings.putString("lastRfid", "-1"); // reset last rfid
-			Log_Println(bootLoopDetected, LOGLEVEL_ERROR);
+			Log_Println((char *)FPSTR(bootLoopDetected), LOGLEVEL_ERROR);
 			recoverLastRfid = false;
-		} else { // normal operation
+
+		}
+		else
+		{ // normal operation
 			gPrefsSettings.putUInt("bootCount", ++bootCount);
 		}
 	}
+
+	if (resetBootCount && millis() >= 30000)
+	{ // reset bootcount
+		resetBootCount = false;
+		bootCount = 0;
+		gPrefsSettings.putUInt("bootCount", bootCount);
+		Log_Println((char *)FPSTR(noBootLoopDetected), LOGLEVEL_INFO);
+	}
+}
+
 
 	if (resetBootCount && millis() >= 30000) { // reset bootcount
 		resetBootCount = false;
@@ -106,23 +127,32 @@ void recoverBootCountFromNvs(void) {
 void recoverLastRfidPlayedFromNvs(bool force) {
 	if (recoverLastRfid || force) {
 		if (System_GetOperationMode() == OPMODE_BLUETOOTH_SINK) { // Don't recover if BT-mode is desired
+
 			recoverLastRfid = false;
 			return;
 		}
 		recoverLastRfid = false;
 		String lastRfidPlayed = gPrefsSettings.getString("lastRfid", "-1");
+
 		if (!lastRfidPlayed.compareTo("-1")) {
 			Log_Println(unableToRestoreLastRfidFromNVS, LOGLEVEL_INFO);
 		} else {
 			xQueueSend(gRfidCardQueue, lastRfidPlayed.c_str(), 0);
 			gPlayLastRfIdWhenWiFiConnected = !force;
 			Log_Printf(LOGLEVEL_INFO, restoredLastRfidFromNVS, lastRfidPlayed.c_str());
+
 		}
 	}
 }
 #endif
 
-void setup() {
+void setup()
+{
+
+	// Direkt nach dem Booten Shutdown auf High damit es nicht wieder ausgeht
+	pinMode(22, OUTPUT);
+	digitalWrite(22, HIGH);
+
 	Log_Init();
 	Queues_Init();
 
@@ -138,7 +168,9 @@ void setup() {
 #ifdef I2C_2_ENABLE
 	i2cBusTwo.begin(ext_IIC_DATA, ext_IIC_CLK);
 	delay(50);
+
 	Log_Println(rfidScannerReady, LOGLEVEL_DEBUG);
+
 #endif
 
 #ifdef HALLEFFECT_SENSOR_ENABLE
@@ -186,10 +218,12 @@ void setup() {
 	Serial.print(logo);
 
 	// Software-version
+
 	Log_Println(softwareRevision, LOGLEVEL_NOTICE);
 	Log_Println(gitRevision, LOGLEVEL_NOTICE);
 	Log_Printf(LOGLEVEL_NOTICE, "Arduino version: %d.%d.%d", ESP_ARDUINO_VERSION_MAJOR, ESP_ARDUINO_VERSION_MINOR, ESP_ARDUINO_VERSION_PATCH);
 	Log_Printf(LOGLEVEL_NOTICE, "ESP-IDF version: %s", ESP.getSdkVersion());
+
 
 	// print wake-up reason
 	System_ShowWakeUpReason();
@@ -199,15 +233,18 @@ void setup() {
 	Ftp_Init();
 	Mqtt_Init();
 #ifndef PN5180_ENABLE_LPCD
-	#if defined(RFID_READER_TYPE_MFRC522_SPI) || defined(RFID_READER_TYPE_MFRC522_I2C) || defined(RFID_READER_TYPE_PN5180)
+
+#if defined(RFID_READER_TYPE_MFRC522_SPI) || defined(RFID_READER_TYPE_MFRC522_I2C) || defined(RFID_READER_TYPE_PN5180)
 	Rfid_Init();
-	#endif
+#endif
+
 #endif
 	RotaryEncoder_Init();
 	Wlan_Init();
 	Bluetooth_Init();
 
-	if (OPMODE_NORMAL == System_GetOperationMode()) {
+	if (OPMODE_NORMAL == System_GetOperationMode())
+	{
 		Wlan_Cyclic();
 	}
 
@@ -220,6 +257,7 @@ void setup() {
 	Log_Printf(LOGLEVEL_DEBUG, "Flash-size: %u bytes", ESP.getFlashChipSize());
 	if (Wlan_IsConnected()) {
 		Log_Printf(LOGLEVEL_DEBUG, "RSSI: %d dBm", Wlan_GetRssi());
+
 	}
 
 #ifdef CONTROLS_LOCKED_BY_DEFAULT
@@ -227,15 +265,21 @@ void setup() {
 #endif
 }
 
-void loop() {
-	if (OPMODE_BLUETOOTH_SINK == System_GetOperationMode()) {
+void loop()
+{
+	if (OPMODE_BLUETOOTH_SINK == System_GetOperationMode())
+	{
 		// bluetooth speaker mode
 		Bluetooth_Cyclic();
+
 	} else if (OPMODE_BLUETOOTH_SOURCE == System_GetOperationMode()) {
+
 		// bluetooth headset mode
 		Bluetooth_Cyclic();
 		RotaryEncoder_Cyclic();
-	} else {
+	}
+	else
+	{
 		// normal mode
 		Wlan_Cyclic();
 		Web_Cyclic();

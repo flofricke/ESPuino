@@ -12,21 +12,22 @@
 #ifdef SD_MMC_1BIT_MODE
 fs::FS gFSystem = (fs::FS) SD_MMC;
 #else
-SPIClass spiSD(HSPI);
-fs::FS gFSystem = (fs::FS) SD;
+	SPIClass spiSD(VSPI);
+	fs::FS gFSystem = (fs::FS)SD;
 #endif
 
 void SdCard_Init(void) {
-#ifdef NO_SDCARD
-	// Initialize without any SD card, e.g. for webplayer only
-	Log_Println("Init without SD card ", LOGLEVEL_NOTICE);
-	return
-#endif
-
-#ifndef SINGLE_SPI_ENABLE
-	#ifdef SD_MMC_1BIT_MODE
-		pinMode(2, INPUT_PULLUP);
-	while (!SD_MMC.begin("/sdcard", true)) {
+	#ifndef SINGLE_SPI_ENABLE
+		#ifdef SD_MMC_1BIT_MODE
+			pinMode(2, INPUT_PULLUP);
+			while (!SD_MMC.begin("/sdcard", true)) {
+		#else
+			pinMode(SPISD_CS, OUTPUT);
+			digitalWrite(SPISD_CS, HIGH);
+			spiSD.begin(SPISD_SCK, SPISD_MISO, SPISD_MOSI, SPISD_CS);
+			// spiSD.setFrequency(1000000);
+			while (!SD.begin(SPISD_CS, spiSD, 80000000U)) {
+		#endif
 	#else
 		pinMode(SPISD_CS, OUTPUT);
 	digitalWrite(SPISD_CS, HIGH);

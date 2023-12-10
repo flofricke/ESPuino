@@ -223,16 +223,22 @@ void System_DeepSleepManager(void) {
 		Power_PeripheralOff();
 		// time to settle down..
 		delay(200);
-// .. for LPCD
-#if defined(RFID_READER_TYPE_MFRC522_SPI) || defined(RFID_READER_TYPE_MFRC522_I2C) || defined(RFID_READER_TYPE_PN5180)
-		Rfid_Exit();
-#endif
-#ifdef PORT_EXPANDER_ENABLE
-		Port_Exit();
-#endif
-		// goto sleep now
-		Log_Println("deep-sleep, good night.......", LOGLEVEL_NOTICE);
-		esp_deep_sleep_start();
+
+    #if defined (RFID_READER_TYPE_MFRC522_SPI) || defined (RFID_READER_TYPE_MFRC522_I2C) || defined(RFID_READER_TYPE_PN5180)
+			Rfid_Exit();
+		#endif
+		#ifdef PORT_EXPANDER_ENABLE
+			Port_Exit();
+		#endif
+
+		pinMode(15, OUTPUT);
+		digitalWrite(15, LOW);
+		digitalWrite(22, LOW);
+
+		Log_Println((char *) F("deep-sleep, good night......."), LOGLEVEL_NOTICE);
+
+		// esp_deep_sleep_start();
+
 	}
 }
 
